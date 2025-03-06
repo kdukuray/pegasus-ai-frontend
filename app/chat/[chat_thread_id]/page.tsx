@@ -10,9 +10,14 @@ import { useEffect, useState } from "react";
 interface DynamicUrlParams{
   chat_thread_id: number
 }
+
+interface ChatThreadMessage{
+  role: string,
+  content: string
+}
 export default function ChatPage({params}: {params: Promise<DynamicUrlParams>}) {
 
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatThreadMessage[]>([]);
 
   async function getChatThreadId(params: Promise<DynamicUrlParams>){
     try{
@@ -30,7 +35,7 @@ export default function ChatPage({params}: {params: Promise<DynamicUrlParams>}) 
 
   async function getChatMessages(chatThreadId: number){
     // console.log("Our function ran")
-    const response = await fetch("http://localhost:8000/chatapi/thread/messages/1", {
+    const response = await fetch(`http://localhost:8000/chatapi/thread/messages/${chatThreadId}`, {
       method: "GET",
     })
     if (!response.ok){
@@ -57,15 +62,11 @@ export default function ChatPage({params}: {params: Promise<DynamicUrlParams>}) 
 
   }, [])
 
-
-
-
-
   return (
     <div className="">
       <SidebarProvider className="absolute">
         <SidebarTrigger className="ml-20"></SidebarTrigger>
-        <ChatSidebar></ChatSidebar>
+        <ChatSidebar getChatMessages={getChatMessages}></ChatSidebar>
       </SidebarProvider>
       <ChatThread messages={messages}></ChatThread>
     </div>

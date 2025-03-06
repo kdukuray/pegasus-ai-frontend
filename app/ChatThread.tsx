@@ -7,10 +7,14 @@ import { useEffect, useState } from "react";
 interface UrlParams{
     chat_thread_id: number
 }
+interface ChatThreadMessage{
+    role: string,
+    content: string
+}
 
-    export default function ChatThread(props: {messages: string[]}){
+    export default function ChatThread(props: {messages: ChatThreadMessage[]}){
     const [textAreaValue, setTextAreaValue] = useState<string>("");
-    const [messages, setMessages] = useState<string[]>([]);
+    const [messages, setMessages] = useState<ChatThreadMessage[]>([]);
 
     // async function getChatThreadId(params: Promise<UrlParams>): Promise<number>{
     //     try{
@@ -44,8 +48,10 @@ interface UrlParams{
 
 
     async function handleChatSubmit(){
+        setTextAreaValue("")
+        
         setMessages((prevMessages)=>{
-            const updatedMessages = [...prevMessages, textAreaValue]
+            const updatedMessages = [...prevMessages, {role: "user", content: textAreaValue}]
             return updatedMessages
         })
         const payload = new FormData();
@@ -71,7 +77,7 @@ interface UrlParams{
         // The second is the value actually coming bac as the stream
         // streams come in as bytes as therefore must be decded into strings as seen below
         const decoder = new TextDecoder()
-        setMessages((prevMessages) => [...prevMessages, ""])
+        setMessages((prevMessages) => [...prevMessages, {role: "assistant", content: ""}])
         while (true){
             const {done, value} = await reader.read()
             console.log(decoder.decode(value))
@@ -81,7 +87,8 @@ interface UrlParams{
             }
             setMessages((prevMessages) => {
                 let updatedMessages = [...prevMessages]
-                updatedMessages[updatedMessages.length-1] += decoder.decode(value)
+                let lastMessageDelta = updatedMessages[updatedMessages.length-1].content
+                updatedMessages[updatedMessages.length-1] = {role: "assistant", content: lastMessageDelta + decoder.decode(value)}
                 return updatedMessages
             })
         } 
@@ -115,7 +122,11 @@ interface UrlParams{
                 ></ChatMessage>
             })}
             <div className="h-40"></div>
-            <ChatTextInput setTextAreaValue={setTextAreaValue} handleChatSubmit={handleChatSubmit}></ChatTextInput>
+            <ChatTextInput 
+            setTextAreaValue={setTextAreaValue} 
+            handleChatSubmit={handleChatSubmit}
+            textAreaValue={textAreaValue}
+            ></ChatTextInput>
            
         </div>
         )

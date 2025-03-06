@@ -2,15 +2,46 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from "@/components/ui/sidebar";
 import clsx from "clsx";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function ChatSidebar(){
+
+interface SidebarChatThread{
+    id: number,
+    name: string
+}
+
+export default function ChatSidebar({getChatMessages}: {getChatMessages: any}){
+    const router = useRouter()
     const dummy_data = [
         "AI Agent Defintion ...",
         "What is AI Distillation ...",
     ]
+
+    function naigateToThread(chat_thread_id: number){
+        getChatMessages(chat_thread_id)
+        // router.push(`http://localhost:3000/chat/${chat_thread_id}`)
+        
+        
+
+    }
+
+    const [chatThreads, setChatThreads] = useState<SidebarChatThread[]>([]);
+
+    async function getSidebarChatThreads(){
+        const resp = await fetch("http://localhost:8000/chatapi/threads")
+        if (resp.ok){
+            const payload = await resp.json()
+            const chat_threads = payload.threads
+            
+            setChatThreads(chat_threads)
+        }
+
+    }
     const [activeThreadIndex, setActiveThreadIndex] = useState<Number>();
     useEffect(()=>{
+        getSidebarChatThreads()
+        // get the chat threads from the server
         setActiveThreadIndex(0)
     }, [])
     
@@ -43,10 +74,12 @@ export default function ChatSidebar(){
                     <SidebarGroupContent>
                         <SidebarGroupLabel>Recent Chat</SidebarGroupLabel>
                         <SidebarMenu>
-                            {dummy_data.map((sideBarThread, index) =>{
+                            {chatThreads.map((chatThread, index) =>{
                                 return (
                                     <SidebarMenuItem key={index}>
-                                    <SidebarMenuButton className={clsx("h-10", {"bg-sidebar-accent text-sidebar-accent-foreground": (index === activeThreadIndex)})}>{sideBarThread}</SidebarMenuButton>
+                                    <SidebarMenuButton className={clsx("h-10", {"bg-sidebar-accent text-sidebar-accent-foreground": (index === activeThreadIndex)})}
+                                    onClick={()=>naigateToThread(chatThread.id)}
+                                    >{chatThread.name}</SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )
                             })}
